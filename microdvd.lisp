@@ -14,38 +14,38 @@
                   (assert (char= stop-character char))
                   (return result))))
 
-(defun read-frame-number (stream)
+(defun read-fragment-number (stream)
   (assert (char= (read-char stream) #\{))
   (read-integer stream #\}))
 
 (defun read-text (stream)
   (read-line stream))
 
-(defun read-frame (stream)
-  (let ((frame (make-instance 'frame)))
-    (with-slots (text start-time end-time) frame
-      (setf start-time (read-frame-number stream)
-            end-time (read-frame-number stream)
+(defun read-fragment (stream)
+  (let ((fragment (make-instance 'fragment-by-frame)))
+    (with-slots (text start end) fragment
+      (setf start (read-fragment-number stream)
+            end (read-fragment-number stream)
             text (read-text stream))
-      frame)))
+      fragment)))
 
-(defun write-frame-number (frame stream)
+(defun write-fragment-number (fragment stream)
   (format stream "{~a}{~a}"
-          (start-time frame)
-          (end-time frame)))
+          (start fragment)
+          (end fragment)))
 
-(defun write-frame (frame stream)
-  (write-frame-number frame stream)
-  (write-line (text frame) stream))
+(defun write-fragment (fragment stream)
+  (write-fragment-number fragment stream)
+  (write-line (text fragment) stream))
 
 (defmethod read-subtitles ((type (eql 'microdvd)) stream)
   (make-instance 'subtitles :contents
                  (loop while (listen stream)
-                       collect (read-frame stream))))
+                       collect (read-fragment stream))))
 
 (defmethod write-subtitles ((type (eql 'microdvd)) subtitles stream)
-  (loop for frame in (contents subtitles)
-        do (write-frame frame stream)))
+  (loop for fragment in (contents subtitles)
+        do (write-fragment fragment stream)))
 
 (defmethod external-format ((type (eql 'microdvd))
                             &optional (encoding *default-encoding*))

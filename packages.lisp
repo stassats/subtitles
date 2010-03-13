@@ -3,20 +3,26 @@
 (defpackage #:subtitles
   (:use #:cl)
   (:export #:subtitles
-           #:frame
+           #:fragment
+           #:fragment-by-time
+           #:fragment-by-frame
            #:read-subtitles
            #:write-subtitles
            #:external-format
            #:register-type
-           #:load-subtitle
-           #:save-subtitle
+           #:load-subtitles
+           #:save-subtitles
            #:encode-time
            #:decode-time
            #:contents
            #:text
-           #:start-time
-           #:end-time
-           #:*default-encoding*))
+           #:start
+           #:end
+           #:*default-encoding*
+           #:convert-frame-rate
+           #:+23.976+
+           #:+29.970+
+           #:+25+))
 
 (defpackage #:subtitles.subrip
   (:use #:cl #:subtitles))

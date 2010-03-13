@@ -12,16 +12,19 @@
              :accessor contents
              :initarg :contents)))
 
-(defclass frame ()
+(defclass fragment ()
   ((text :initform nil
          :accessor text
          :initarg :text)
-   (start-time :initform 0
-               :accessor start-time
-               :initarg :start-time)
-   (end-time :initform 0
-             :accessor end-time
-             :initarg :end-time)))
+   (start :initform 0
+          :accessor start
+          :initarg :start)
+   (end :initform 0
+        :accessor end
+        :initarg :end)))
+
+(defclass fragment-by-time (fragment) ())
+(defclass fragment-by-frame (fragment) ())
 
 (defgeneric read-subtitles (type stream))
 (defgeneric write-subtitles (type subtitles stream))
@@ -43,7 +46,7 @@
         when (funcall function file-name) return type))
 ;;;
 
-(defun load-subtitle (file-name &optional (type (file-type file-name)))
+(defun load-subtitles (file-name &optional (type (file-type file-name)))
   (unless type
     (error "Couldn't determine type of ~a." file-name))
   (with-open-file (stream file-name :element-type '(unsigned-byte 8))
@@ -51,7 +54,7 @@
                                          (external-format type))))
       (read-subtitles type flexi))))
 
-(defun save-subtitle (file-name subtitle &optional (type (file-type file-name)))
+(defun save-subtitles (file-name subtitle &optional (type (file-type file-name)))
   (unless type
     (error "Couldn't determine type of ~a." file-name))
   (with-open-file (stream file-name :element-type '(unsigned-byte 8)
@@ -78,3 +81,18 @@
           (m  (remainder 60))
           (h  time))
       (values h m s ms))))
+;;;
+
+(defconstant +23.976+ 23.976)
+(defconstant +25+ 25)
+(defconstant +29.970+ 29.970)
+
+(defun convert-frame-rate (from to subtitles)
+  (let ((multiplier (/ (rational to)
+                       (rational from))))
+    (loop for fragment in (contents subtitles)
+          do (setf (start fragment)
+                   (round (* (start fragment) multiplier))
+                   (end fragment)
+                   (round (* (end fragment) multiplier))))
+    subtitles))

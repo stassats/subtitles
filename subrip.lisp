@@ -36,13 +36,13 @@
           (setf prev-char char))
     result))
 
-(defun read-frame (stream)
+(defun read-fragment (stream)
   (assert (integerp (parse-integer (read-line stream))))
-  (let ((frame (make-instance 'frame)))
-    (with-slots (text start-time end-time) frame
-      (setf (values start-time end-time) (read-time stream)
+  (let ((fragment (make-instance 'fragment-by-time)))
+    (with-slots (text start end) fragment
+      (setf (values start end) (read-time stream)
             text (read-text stream))
-      frame)))
+      fragment)))
 
 (defun write-time (ms stream)
   (multiple-value-bind (h m s ms) (decode-time ms)
@@ -54,27 +54,27 @@
            do (format stream "~v,,,'0@a" digits value)
            when separtor do (write-char separtor stream)))))
 
-(defun write-timings (frame stream)
-  (write-time (start-time frame) stream)
+(defun write-timings (fragment stream)
+  (write-time (start fragment) stream)
   (write-string " --> " stream)
-  (write-time (end-time frame) stream)
+  (write-time (end fragment) stream)
   (terpri stream))
 
-(defun write-frame (frame n stream)
+(defun write-fragment (fragment n stream)
   (format stream "~a~%" n)
-  (write-timings frame stream)
-  (write-line (text frame) stream)
+  (write-timings fragment stream)
+  (write-line (text fragment) stream)
   (terpri stream))
 
 (defmethod read-subtitles ((type (eql 'subrip)) stream)
   (make-instance 'subtitles :contents
                  (loop while (listen stream)
-                       collect (read-frame stream))))
+                       collect (read-fragment stream))))
 
 (defmethod write-subtitles ((type (eql 'subrip)) subtitles stream)
   (loop for number from 1
-        for frame in (contents subtitles)
-        do (write-frame frame number stream)))
+        for fragment in (contents subtitles)
+        do (write-fragment fragment number stream)))
 
 (defmethod external-format ((type (eql 'subrip))
                             &optional (encoding *default-encoding*))
